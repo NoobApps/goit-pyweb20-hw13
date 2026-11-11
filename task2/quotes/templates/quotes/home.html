@@ -1,0 +1,86 @@
+{% extends 'quotes/base.html' %}
+{% load custom_tags %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold mb-0">Цитати</h2>
+</div>
+
+{% if selected_author or selected_tag %}
+    <div class="alert alert-info d-flex align-items-center justify-content-between" role="alert">
+        <div>
+            {% if selected_author %}
+                Активний фільтр за автором: <strong>{{ selected_author.fullname }}</strong>
+            {% endif %}
+            {% if selected_tag %}
+                Активний фільтр за тегом: <span class="badge bg-secondary">#{{ selected_tag }}</span>
+            {% endif %}
+        </div>
+        <a href="{% url 'home' %}" class="btn btn-sm btn-outline-secondary">Скинути всі фільтри</a>
+    </div>
+{% endif %}
+
+<div class="row">
+    {% for quote in page_obj %}
+        <div class="col-12 mb-3">
+            <div class="card shadow-sm border-0 border-start border-4 border-primary">
+                <div class="card-body">
+                    <figure class="mb-0">
+                        <blockquote class="blockquote fs-5 mb-2">
+                            <p>“{{ quote.quote }}”</p>
+                        </blockquote>
+                        <figcaption class="blockquote-footer mb-2">
+                            <a href="{% url 'author_detail' quote.author.id %}" class="text-decoration-none fw-bold">
+                                {{ quote.author.fullname }}
+                            </a>
+                        </figcaption>
+                    </figure>
+
+                    {% if quote.tags %}
+                        <div class="mt-2">
+                            {% for tag in quote.tags|split_by_comma %}
+            <a href="?tag={{ tag }}" class="badge bg-light text-dark border text-decoration-none me-1 mb-1">
+                #{{ tag }}
+            </a>
+        {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="col-12">
+            <div class="text-center py-5">
+                <p class="text-muted fs-5">Цитат не знайдено.</p>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+<!-- Пагінація Bootstrap -->
+{% if page_obj.paginator.num_pages > 1 %}
+    <nav class="mt-4" aria-label="Навігація по сторінках">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?{% url_replace request 'page' page_obj.previous_page_number %}">&laquo; Попередня</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">&laquo; Попередня</span></li>
+            {% endif %}
+
+            <li class="page-item disabled">
+                <span class="page-link">Сторінка {{ page_obj.number }} з {{ page_obj.paginator.num_pages }}</span>
+            </li>
+
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?{% url_replace request 'page' page_obj.next_page_number %}">Наступна &raquo;</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">Наступна &raquo;</span></li>
+            {% endif %}
+        </ul>
+    </nav>
+{% endif %}
+{% endblock %}

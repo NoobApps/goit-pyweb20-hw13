@@ -1,0 +1,19 @@
+[project]
+name = "quotes-project"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Vitaliy Ivaskiv",email = "vitalik.ivaskiv88@gmail.com"}
+]
+requires-python = ">=3.13"
+dependencies = [
+    "psycopg2-binary (>=2.9.13,<3.0.0)",
+    "pymongo (>=4.19.0,<5.0.0)",
+    "django (>=6.1.2,<7.0.0)",
+    "python-dotenv (>=1.2.4,<2.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

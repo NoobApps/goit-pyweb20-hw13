@@ -1,0 +1,35 @@
+{% extends 'quotes/base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                <h2 class="card-title fw-bold text-primary mb-3">{{ author.fullname }}</h2>
+                
+                <div class="row text-muted mb-3">
+                    <div class="col-sm-6">
+                        <strong>Дата народження:</strong> {{ author.born_date|default:"Не вказано" }}
+                    </div>
+                    <div class="col-sm-6">
+                        <strong>Місце народження:</strong> {{ author.born_location|default:"Не вказано" }}
+                    </div>
+                </div>
+
+                <hr>
+
+                <h5 class="fw-bold mb-2">Біографія</h5>
+                <p class="card-text text-secondary style-description" style="line-height: 1.7;">
+                    {{ author.description|default:"Опис відсутній." }}
+                </p>
+
+                <div class="mt-4 pt-2 border-top">
+                    <a href="{% url 'home' %}?author={{ author.id }}" class="btn btn-outline-primary">
+                        Переглянути всі цитати цього автора
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
