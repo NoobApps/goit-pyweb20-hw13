@@ -6,21 +6,27 @@
         <div class="card shadow-sm border-0">
             <div class="card-body p-4">
                 <h3 class="card-title text-center fw-bold mb-4">Реєстрація</h3>
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger mb-3" role="alert">
+                        {% for error in form.non_field_errors %}
+                            <div>{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
                 <form method="post">
                     {% csrf_token %}
 
                     {% for field in form %}
                         <div class="mb-3">
                             <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-                            <input type="{{ field.field.widget.input_type|default:'text' }}" 
-                                   name="{{ field.name }}" 
-                                   id="{{ field.id_for_label }}" 
-                                   class="form-control {% if field.errors %}is-invalid{% endif %}">
+                            {{ field }}
                             {% if field.help_text %}
                                 <div class="form-text small">{{ field.help_text|safe }}</div>
                             {% endif %}
                             {% if field.errors %}
-                                <div class="invalid-feedback">
+                                <div class="invalid-feedback d-block">
                                     {{ field.errors.0 }}
                                 </div>
                             {% endif %}
@@ -31,6 +37,10 @@
                         <button type="submit" class="btn btn-success">Зареєструватися</button>
                     </div>
                 </form>
+
+                <div class="text-center mt-3">
+                    <small class="text-muted">Вже є акаунт? <a href="{% url 'login' %}" class="text-decoration-none">Увійти</a></small>
+                </div>
             </div>
         </div>
     </div>
