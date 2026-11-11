@@ -6,10 +6,8 @@ services:
     image: postgres:15-alpine
     container_name: quotes_postgres
     restart: always
-    environment:
-      POSTGRES_DB: quotes_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+    env_file:
+      - .env
     ports:
       - "5432:5432"
     # volumes:
@@ -30,12 +28,8 @@ services:
       - .:/app
     ports:
       - "8000:8000"
-    environment:
-      - POSTGRES_DB=quotes_db
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_HOST=postgres_db
-      - POSTGRES_PORT=5432
+    env_file:
+      - .env
     depends_on:
       postgres_db:
         condition: service_healthy
