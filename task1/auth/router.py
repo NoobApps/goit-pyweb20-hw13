@@ -9,6 +9,7 @@ from fastapi import (
     BackgroundTasks
 )
 from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.responses import HTMLResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -133,9 +134,19 @@ async def update_user_avatar(
     db: AsyncSession = Depends(get_db)
 ):
     avatar_url = upload_avatar(file.file, public_id=str(current_user.id))
-    current_user.avatar = avatar_url
+    
+    stmt = (
+        update(User)
+        .where(User.id == current_user.id)
+        .values(avatar=avatar_url)
+    )
+    await db.execute(stmt)
     await db.commit()
-    await db.refresh(current_user)
+
+    # Видаляємо старий кеш користувача з Redis
+    await redis_client.delete(f"user:{current_user.email}")
+
+    current_user.avatar = avatar_url
     return current_user
 
 @router.post("/request-reset-password")
@@ -154,12 +165,76 @@ async def request_reset_password(
 
     return {"message": "Якщо вказана адреса існує в системі, ми надіслали інструкції для скидання пароля на вашу пошту."}
 
+
+@router.get("/reset-password-page/{token}", response_class=HTMLResponse, include_in_schema=False)
+async def reset_password_page(token: str):
+    # Перевіряємо валідність токена ще до показу форми
+    payload = decode_token(token, expected_scope="reset_password")
+    if payload is None:
+        return HTMLResponse(
+            content="<h3>Посилання недійсне або термін його дії закінчився.</h3>", 
+            status_code=400
+        )
+
+    return f"""
+    <!DOCTYPE html>
+    <html lang="uk">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Скидання пароля</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    </head>
+    <body class="bg-light d-flex align-items-center vh-100">
+        <div class="container" style="max-width: 420px;">
+            <div class="card shadow-sm p-4">
+                <h4 class="text-center mb-3">Новий пароль</h4>
+                <div class="mb-3">
+                    <label class="form-label">Введіть новий пароль (мін. 6 символів)</label>
+                    <input type="password" id="newPassword" class="form-control" required minlength="6">
+                </div>
+                <button onclick="submitNewPassword()" class="btn btn-primary w-100">Зберегти пароль</button>
+                <div id="msg" class="alert mt-3 d-none"></div>
+            </div>
+        </div>
+
+        <script>
+            async function submitNewPassword() {{
+                const newPassword = document.getElementById("newPassword").value;
+                const msgDiv = document.getElementById("msg");
+
+                const res = await fetch("/auth/reset-password", {{
+                    method: "POST",
+                    headers: {{ "Content-Type": "application/json" }},
+                    body: JSON.stringify({{
+                        token: "{token}",
+                        new_password: newPassword
+                    }})
+                }});
+
+                const data = await res.json();
+                msgDiv.classList.remove("d-none", "alert-danger", "alert-success");
+
+                if (res.ok) {{
+                    msgDiv.classList.add("alert-success");
+                    msgDiv.innerText = data.message + " Перенаправлення на вхід...";
+                    setTimeout(() => window.location.href = "/", 2000);
+                }} else {{
+                    msgDiv.classList.add("alert-danger");
+                    msgDiv.innerText = data.detail || "Помилка при зміні пароля";
+                }}
+            }}
+        </script>
+    </body>
+    </html>
+    """
+
 @router.post("/reset-password")
 async def reset_password(
     body: ResetPasswordSchema,
     db: AsyncSession = Depends(get_db)
 ):
-    payload = decode_token(body.token, expected_scope="access")
+    payload = decode_token(body.token, expected_scope="reset_password")
     if payload is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, 

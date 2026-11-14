@@ -1,6 +1,6 @@
 from pathlib import Path
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
-from auth.auth import create_tokens, decode_token
+from auth.auth import create_tokens, decode_token, create_reset_token
 from config import settings
 
 conf = ConnectionConfig(
@@ -35,13 +35,12 @@ async def send_verification_email(email: str, host: str):
     await fm.send_message(message)
 
 async def send_reset_password_email(email: str, host: str):
-    token = create_tokens({"sub": email})["access_token"]
+    token = create_reset_token(email)
     
     html_content = f"""
     <h3>Скидання паролю</h3>
-    <p>Ви надіслали запит на зміну пароля. Перейдіть за посиланням нижче для введення нового пароля:</p>
-    <a href="{host}auth/reset-password/{token}">Змінити пароль</a>
-    <p>Якщо ви цього не робили, просто ігноруйте цей лист.</p>
+    <p>Для встановлення нового пароля перейдіть за посиланням нижче:</p>
+    <a href="{host}auth/reset-password-page/{token}">Встановити новий пароль</a>
     """
 
     message = MessageSchema(

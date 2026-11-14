@@ -2,7 +2,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-import json
+import pickle
 from database import get_db
 from database_redis import redis_client
 from auth.auth import decode_token
@@ -33,9 +33,7 @@ async def get_current_user(
     user_data = await redis_client.get(cache_key)
 
     if user_data:
-        # Створюємо об'єкт User з даних кешу
-        user_dict = json.loads(user_data)
-        user = User(**user_dict)
+        user = pickle.loads(user_data)
     else:
         # 2. Якщо в кеші немає — шукаємо в PostgreSQL
         stmt = select(User).where(User.email == email)
@@ -53,7 +51,7 @@ async def get_current_user(
             "confirmed": user.confirmed,
             "avatar": user.avatar
         }
-        await redis_client.set(cache_key, json.dumps(cached_user_info), ex=1800)
+        await redis_client.set(cache_key, pickle.dumps(user), ex=1800)
 
     if not user.confirmed:
         raise HTTPException(

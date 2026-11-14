@@ -29,7 +29,10 @@ def create_tokens(data: dict) -> dict:
         "access_token": access_token,
         "refresh_token": refresh_token
     }
-
+def create_reset_token(email: str) -> str:
+    expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+    payload = {"sub": email, "exp": expire, "scope": "reset_password"}
+    return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
 def decode_token(token: str, expected_scope: str = "access") -> dict | None:
     try:

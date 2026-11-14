@@ -7,7 +7,8 @@ from alembic import context
 # 1. Імпортуємо Base та конфігурацію проєкту
 from database import Base
 from config import settings
-import models  
+import models
+target_metadata = models.Base.metadata  
 
 config = context.config
 
